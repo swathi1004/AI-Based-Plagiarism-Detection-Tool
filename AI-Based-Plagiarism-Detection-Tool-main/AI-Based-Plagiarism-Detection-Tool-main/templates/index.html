@@ -1,0 +1,179 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <!-- Error Notification Banner (hidden by default) -->
+        <div class="alert alert-danger mb-4 d-none" role="alert" id="error-banner">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <span id="error-message">An error occurred processing your files.</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Main Card -->
+        <div class="card mb-5">
+            <h2 class="text-center mb-4">
+                <i class="fas fa-search me-2"></i> Plagiarism Checker
+            </h2>
+            
+            <p class="text-center mb-4">
+                Upload any two files to check for potential plagiarism. Our system analyzes code, text documents, PDFs, and
+                GitHub repositories using advanced algorithms and machine learning to determine similarity and highlight
+                matching sections.
+            </p>
+            
+            <form id="plagiarism-form" action="{{ url_for('detect_plagiarism') }}" method="post" enctype="multipart/form-data">
+                <!-- Comparison Type Selection -->
+                <div class="mb-4">
+                    <label for="comparison-type" class="form-label comparison-type-label">Comparison Type</label>
+                    <select class="form-select" id="comparison-type" name="comparison_type" required>
+                        <option value="" selected disabled>Select comparison type</option>
+                        <option value="text_text">Text vs Text</option>
+                        <option value="pdf_pdf">PDF vs PDF</option>
+                        <option value="text_pdf">Text vs PDF</option>
+                        <option value="github_github">GitHub Repositories</option>
+                    </select>
+                    <small class="form-text">Choose the type of comparison you want to perform</small>
+                </div>
+                
+                <!-- Programming Language Selection (hidden by default) -->
+                <div class="mb-4 d-none" id="programming-language-section">
+                    <label for="programming-language" class="form-label">Programming Language (for code files only)</label>
+                    <select class="form-select" id="programming-language" name="programming_language">
+                        <option value="auto" selected>Auto Detect</option>
+                        <option value="python">Python</option>
+                        <option value="java">Java</option>
+                        <option value="javascript">JavaScript</option>
+                        <option value="c">C</option>
+                        <option value="cpp">C++</option>
+                        <option value="csharp">C#</option>
+                        <option value="php">PHP</option>
+                        <option value="ruby">Ruby</option>
+                        <option value="go">Go</option>
+                    </select>
+                    <small class="form-text">Only applies to source code files. For text/PDF documents, this setting is ignored.</small>
+                </div>
+                
+                <!-- File Upload Areas -->
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">First File</label>
+                        <div class="upload-area" id="upload-area-1">
+                            <input type="file" class="file-input" id="file1" name="file1" required>
+                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                            <p class="upload-text">Drop your file here or click to browse</p>
+                            <p class="selected-file"></p>
+                        </div>
+                        <small class="form-text">Select any supported file type</small>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Second File</label>
+                        <div class="upload-area" id="upload-area-2">
+                            <input type="file" class="file-input" id="file2" name="file2" required>
+                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                            <p class="upload-text">Drop your file here or click to browse</p>
+                            <p class="selected-file"></p>
+                        </div>
+                        <small class="form-text">Select any supported file type</small>
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary" id="submit-button">
+                        <i class="fas fa-search me-2"></i> Detect Plagiarism
+                    </button>
+                </div>
+                
+                <!-- Loading Spinner (hidden by default) -->
+                <div class="text-center mt-3 d-none" id="spinner">
+                    <div class="spinner"></div>
+                    <p>Analyzing files, please wait...</p>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Supported File Types Card -->
+        <div class="card mb-5">
+            <div class="alert alert-primary border-0 mb-0">
+                <i class="fas fa-info-circle me-2"></i> <strong>Supported File Types:</strong> Source Code (.py, .java, .cpp, etc.), Text (.txt), PDF (.pdf), and ZIP archives of GitHub repositories
+            </div>
+        </div>
+        
+        <!-- Features Section -->
+        <h3 class="section-title mb-4" id="features-section">
+            <i class="fas fa-star me-2"></i> Supported Features
+        </h3>
+        
+        <div class="features-grid">
+            <!-- Feature 1 -->
+            <div class="feature-card">
+                <i class="fas fa-file-alt feature-icon"></i>
+                <h4 class="feature-title">Text vs Text</h4>
+                <p class="feature-description">
+                    Compares text documents using cosine similarity on TF-IDF vectors to accurately detect similarities between plain text files.
+                </p>
+            </div>
+            
+            <!-- Feature 2 -->
+            <div class="feature-card">
+                <i class="fas fa-file-pdf feature-icon"></i>
+                <p class="feature-title">Text vs PDF</p>
+                <p class="feature-description">
+                    Extracts text content from PDF documents using PyPDF2/pdfplumber and compares it with text files for cross-format plagiarism detection.
+                </p>
+            </div>
+            
+            <!-- Feature 3 -->
+            <div class="feature-card">
+                <i class="fas fa-copy feature-icon"></i>
+                <p class="feature-title">PDF vs PDF</p>
+                <p class="feature-description">
+                    Extracts and compares text from multiple PDF documents, ideal for comparing academic papers, reports, and other PDF content.
+                </p>
+            </div>
+            
+            <!-- Feature 4 -->
+            <div class="feature-card">
+                <i class="fab fa-github feature-icon"></i>
+                <p class="feature-title">GitHub Repositories</p>
+                <p class="feature-description">
+                    Upload ZIP files of GitHub repositories to analyze code similarities across entire projects with language-specific comparisons.
+                </p>
+            </div>
+            
+            <!-- Feature 5 -->
+            <div class="feature-card">
+                <i class="fas fa-cogs feature-icon"></i>
+                <p class="feature-title">Advanced Algorithms</p>
+                <p class="feature-description">
+                    Utilizes multiple comparison algorithms including cosine similarity, Jaccard index, and sequence matching for precise detection.
+                </p>
+            </div>
+            
+            <!-- Feature 6 -->
+            <div class="feature-card">
+                <i class="fas fa-chart-bar feature-icon"></i>
+                <p class="feature-title">Detailed Results</p>
+                <p class="feature-description">
+                    View similarity percentage and specific matching sections between files with clear visual highlighting for better understanding.
+                </p>
+            </div>
+        </div>
+        
+
+        
+        <!-- About Section -->
+        <div class="card mt-5">
+            <h3 class="section-title mb-3" id="about-section">
+                <i class="fas fa-info-circle me-2"></i> About
+            </h3>
+            
+            <p>
+                The Plagiarism Checker helps identify similarities between documents, code, and repositories using advanced machine learning algorithms and natural language processing techniques.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

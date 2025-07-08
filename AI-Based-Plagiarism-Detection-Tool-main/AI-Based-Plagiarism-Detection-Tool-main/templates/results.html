@@ -1,0 +1,232 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <!-- Result Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="section-title mb-0">
+                <i class="fas fa-chart-pie me-2"></i> Plagiarism Analysis Results
+            </h2>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-light">
+                <i class="fas fa-arrow-left me-2"></i> New Comparison
+            </a>
+        </div>
+        
+        <!-- Summary Card -->
+        <div class="result-card">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>Files Compared</h4>
+                    <div class="mb-3">
+                        <span class="badge bg-secondary me-2">File 1</span>
+                        <span>{{ result.file1_name }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <span class="badge bg-secondary me-2">File 2</span>
+                        <span>{{ result.file2_name }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <span class="badge bg-secondary me-2">Comparison Type</span>
+                        <span>
+                            {% if result.comparison_type == 'text_text' %}
+                                Text vs Text
+                            {% elif result.comparison_type == 'pdf_pdf' %}
+                                PDF vs PDF
+                            {% elif result.comparison_type == 'text_pdf' %}
+                                Text vs PDF
+                            {% elif result.comparison_type == 'github_github' %}
+                                GitHub Repositories
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 text-center">
+                    <h4>Similarity Score</h4>
+                    <div class="similarity-score">{{ "%.1f"|format(result.similarity * 100) }}%</div>
+                    
+                    <div class="progress" style="height: 20px;">
+                        {% set similarity_percentage = result.similarity * 100 %}
+                        {% if similarity_percentage > 75 %}
+                            {% set bar_class = "bg-danger" %}
+                        {% elif similarity_percentage > 50 %}
+                            {% set bar_class = "bg-warning" %}
+                        {% elif similarity_percentage > 25 %}
+                            {% set bar_class = "bg-info" %}
+                        {% else %}
+                            {% set bar_class = "bg-success" %}
+                        {% endif %}
+                        
+                        <div class="progress-bar {{ bar_class }}" role="progressbar" 
+                            style="width: {{ similarity_percentage }}%;" 
+                            aria-valuenow="{{ similarity_percentage }}" 
+                            aria-valuemin="0" 
+                            aria-valuemax="100">
+                            {{ "%.1f"|format(similarity_percentage) }}%
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        {% if similarity_percentage > 75 %}
+                            <span class="badge bg-danger">High Similarity</span>
+                        {% elif similarity_percentage > 50 %}
+                            <span class="badge bg-warning">Moderate Similarity</span>
+                        {% elif similarity_percentage > 25 %}
+                            <span class="badge bg-info">Low Similarity</span>
+                        {% else %}
+                            <span class="badge bg-success">Minimal Similarity</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Matched Sections -->
+        <h3 class="section-title mt-5 mb-4">
+            <i class="fas fa-puzzle-piece me-2"></i> Matching Sections
+        </h3>
+        
+        {% if result.matched_sections|length > 0 %}
+            <div class="card mb-4">
+                <div class="alert alert-info border-0 mb-3">
+                    <i class="fas fa-info-circle me-2"></i> The following sections show similarities between your files. Sections are ranked by similarity score.
+                </div>
+                
+                <div class="matched-sections-counter mb-3">
+                    <span class="badge bg-primary rounded-pill">{{ result.matched_sections|length }} matching sections found</span>
+                </div>
+            </div>
+            
+            {% for section in result.matched_sections %}
+                <div class="matched-section">
+                    <div class="matched-section-header mb-3 d-flex justify-content-between align-items-center">
+                        <h5 class="matched-section-title mb-0">Match #{{ loop.index }}</h5>
+                        <span class="badge {% if section.similarity > 0.75 %}bg-danger{% elif section.similarity > 0.5 %}bg-warning{% elif section.similarity > 0.25 %}bg-info{% else %}bg-success{% endif %}">
+                            Similarity: {{ "%.1f"|format(section.similarity * 100) }}%
+                        </span>
+                    </div>
+                    
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card matched-file">
+                                <div class="card-header bg-primary text-white">
+                                    <strong>{{ result.file1_name }}</strong>
+                                </div>
+                                <div class="card-body">
+                                    <pre class="highlight mb-0">{{ section.file1_text }}</pre>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card matched-file">
+                                <div class="card-header bg-primary text-white">
+                                    <strong>{{ result.file2_name }}</strong>
+                                </div>
+                                <div class="card-body">
+                                    <pre class="highlight mb-0">{{ section.file2_text }}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> No significant matching sections were found between the files.
+            </div>
+        {% endif %}
+        
+        <!-- Analysis Details -->
+        <div class="card mt-5">
+            <div class="card-body">
+                <h4 class="section-title mb-4">
+                    <i class="fas fa-microscope me-2"></i> Analysis Details
+                </h4>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-4">
+                            <h5 class="text-primary">Method Used</h5>
+                            <p class="method-description mb-0">
+                                {% if result.comparison_type == 'text_text' %}
+                                    <i class="fas fa-check-circle me-2 text-success"></i> 
+                                    {% if result.using_enhanced_models %}
+                                        BERT-based semantic analysis with deep learning models for text comparison.
+                                    {% else %}
+                                        TF-IDF vectorization with cosine similarity calculation for text comparison.
+                                    {% endif %}
+                                {% elif result.comparison_type == 'pdf_pdf' %}
+                                    <i class="fas fa-check-circle me-2 text-success"></i> 
+                                    {% if result.using_enhanced_models %}
+                                        Advanced text extraction from PDF with OCR capabilities and BERT-based semantic similarity analysis.
+                                    {% else %}
+                                        Text extraction from PDF followed by TF-IDF vectorization and cosine similarity.
+                                    {% endif %}
+                                {% elif result.comparison_type == 'text_pdf' %}
+                                    <i class="fas fa-check-circle me-2 text-success"></i> 
+                                    {% if result.using_enhanced_models %}
+                                        Enhanced text extraction from PDF with OCR support and semantic comparison using BERT models.
+                                    {% else %}
+                                        Text extraction from PDF and comparison with text file using TF-IDF and cosine similarity.
+                                    {% endif %}
+                                {% elif result.comparison_type == 'github_github' %}
+                                    <i class="fas fa-check-circle me-2 text-success"></i> 
+                                    {% if result.using_enhanced_models %}
+                                        Code analysis using CodeBERT and language-specific tokenization with advanced semantic understanding.
+                                    {% else %}
+                                        Code analysis using language-specific tokenization and similarity metrics.
+                                    {% endif %}
+                                {% endif %}
+                            </p>
+                            {% if result.using_enhanced_models %}
+                            <div class="badge bg-info text-white mt-2">
+                                <i class="fas fa-robot me-1"></i> Using Enhanced ML Analysis
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-4">
+                            <h5 class="text-primary">Similarity Assessment</h5>
+                            <div class="similarity-legend">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="badge bg-success me-2">0-25%</span>
+                                    <span>Minimal similarity</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="badge bg-info me-2">26-50%</span>
+                                    <span>Low similarity</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="badge bg-warning me-2">51-75%</span>
+                                    <span>Moderate similarity</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-danger me-2">76-100%</span>
+                                    <span>High similarity</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-secondary mt-2">
+                    <i class="fas fa-lightbulb me-2"></i> <strong>Tip:</strong> This similarity score should be used as a reference. We recommend manual review of the matched sections for context and understanding.
+                </div>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="d-flex justify-content-center mt-5 mb-3">
+            <a href="{{ url_for('index') }}" class="btn btn-primary me-3">
+                <i class="fas fa-redo me-2"></i> New Comparison
+            </a>
+            <a href="#" class="btn btn-outline-light" onclick="window.print();">
+                <i class="fas fa-print me-2"></i> Print Results
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
